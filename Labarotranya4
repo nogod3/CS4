@@ -1,1 +1,136 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Runtime.Serialization;
+using System.Runtime.Serialization.Formatters.Binary;
+using System.Xml;
+using System.Xml.Serialization;
 
+[Serializable]
+public class TextFile
+{
+    public string FilePath { get; set; }
+    public string Content { get; set; }
+
+    public TextFile(string filePath, string content)
+    {
+        FilePath = filePath;
+        Content = content;
+    }
+
+    public void SaveBinary(string filePath)
+    {
+        using (FileStream FileStream = new FileStream(filePath, FileMode.Create))
+        {
+            BinaryFormatter Formatter = new BinaryFormatter();
+            Formatter.Serialize(FileStream, this);
+        }
+    }
+
+    public static TextFile LoadBinary(string filePath)
+    {
+        using (FileStream FileStream = new FileStream(filePath, FileMode.Open))
+        {
+            BinaryFormatter Formatter = new BinaryFormatter();
+            return (TextFile)Formatter.Deserialize( FileStream);
+        }
+    }
+
+    public void SaveXml(string filePath)
+    {
+        XmlSerializer serializer = new XmlSerializer(typeof(TextFile));
+        using (XmlWriter writer = XmlWriter.Create(filePath))
+        {
+            serializer.Serialize(writer, this);
+        }
+    }
+
+    public static TextFile LoadXml(string filePath)
+    {
+        XmlSerializer serializer = new XmlSerializer(typeof(TextFile));
+        using (XmlReader reader = XmlReader.Create(filePath))
+        {
+            return (TextFile)serializer.Deserialize(reader);
+        }
+    }
+}
+
+public class TextFileSearcher
+{
+    public string[] Search(string directory, string[] keywords)
+    {
+        string[] files = Directory.GetFiles(directory, "*.txt", SearchOption.AllDirectories);
+
+        string[] foundFiles = new List<string>();
+        foreach (string file in files)
+        {
+            string content = File.ReadAllText(file);
+            if (keywords.Any(keyword => content.Contains(keyword)))
+            {
+                foundFiles.Add(file);
+            }
+        }
+        return foundFiles;
+    }
+}
+
+[Serializable]
+public class TextFileMemento
+{
+    public string Content { get; }
+
+    public TextFileMemento(string content)
+    {
+        Content = content;
+    }
+}
+
+public class TextFileEditor
+{
+    private TextFile textFile;
+    private Stack<TextFileMemento> history = new Stack<TextFileMemento>();
+
+    public TextFileEditor(TextFile file)
+    {
+        textFile = file;
+        history.Push(new TextFileMemento(file.Content));
+    }
+
+    public void Edit(string newContent)
+    {
+        history.Push(new TextFileMemento(textFile.Content));
+        textFile.Content = newContent;
+    }
+
+    public void Undo()
+    {
+        if (history.Count > 1)
+        {
+            history.Pop();
+            textFile.Content = history.Peek().Content;
+        }
+    }
+
+    public void Save()
+    {
+        File.WriteAllText(textFile.FilePath, textFile.Content);
+    }
+}
+
+class Program
+{
+    static void Main(string[] args)
+    {
+        string directory = @"C:\Path\To\Directory";
+        string[] keywords = { "keyword1", "keyword2" };
+
+        TextFileSearcher searcher = new TextFileSearcher();
+        string[] foundFiles = searcher.Search(directory, keywords);
+
+        foreach (string file in foundFiles)
+        {
+            Console.WriteLine("Found: " + file);
+        }
+    }
+}

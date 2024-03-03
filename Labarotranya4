@@ -21,19 +21,19 @@ public class TextFile
 
     public void SaveBinary(string filePath)
     {
-        using (FileStream fs = new FileStream(filePath, FileMode.Create))
+        using (FileStream FileStream = new FileStream(filePath, FileMode.Create))
         {
-            BinaryFormatter formatter = new BinaryFormatter();
-            formatter.Serialize(fs, this);
+            BinaryFormatter Formatter = new BinaryFormatter();
+            Formatter.Serialize(FileStream, this);
         }
     }
 
     public static TextFile LoadBinary(string filePath)
     {
-        using (FileStream fs = new FileStream(filePath, FileMode.Open))
+        using (FileStream FileStream = new FileStream(filePath, FileMode.Open))
         {
-            BinaryFormatter formatter = new BinaryFormatter();
-            return (TextFile)formatter.Deserialize(fs);
+            BinaryFormatter Formatter = new BinaryFormatter();
+            return (TextFile)Formatter.Deserialize( FileStream);
         }
     }
 
@@ -58,11 +58,11 @@ public class TextFile
 
 public class TextFileSearcher
 {
-    public IEnumerable<string> Search(string directory, string[] keywords)
+    public string[] Search(string directory, string[] keywords)
     {
-        IEnumerable<string> files = Directory.GetFiles(directory, "*.txt", SearchOption.AllDirectories);
+        string[] files = Directory.GetFiles(directory, "*.txt", SearchOption.AllDirectories);
 
-        List<string> foundFiles = new List<string>();
+        string[] foundFiles = new List<string>();
         foreach (string file in files)
         {
             string content = File.ReadAllText(file);
@@ -126,7 +126,7 @@ class Program
         string[] keywords = { "keyword1", "keyword2" };
 
         TextFileSearcher searcher = new TextFileSearcher();
-        IEnumerable<string> foundFiles = searcher.Search(directory, keywords);
+        string[] foundFiles = searcher.Search(directory, keywords);
 
         foreach (string file in foundFiles)
         {
